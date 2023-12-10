@@ -1,0 +1,42 @@
+{
+    "drinks": [
+        {
+            "name": "Charlie",
+            "ingredients": [
+                {
+                    "ingredient": "Sternmarke",
+                    "volumePercentage": 30
+                },
+                {
+                    "ingredient": "Cola",
+                    "volumePercentage": 70
+                }
+            ]
+        },
+        {
+            "name": "Vodka E",
+            "ingredients": [
+                {
+                    "ingredient": "Vodka",
+                    "volumePercentage": 30
+                },
+                {
+                    "ingredient": "Energy",
+                    "volumePercentage": 70
+                }
+            ]
+        }
+    ],
+    "timeFor100ml": 1,
+    "hoseConfig": [
+        {
+            "Sternmarke": 1
+        },
+        {
+            "Cola": 2
+        }
+    ],
+    "glassVolumes": [
+        300, 400
+    ]
+}
