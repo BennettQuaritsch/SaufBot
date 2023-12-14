@@ -2,6 +2,17 @@ from tkinter import *
 import json
 from functools import partial
 from time import sleep
+import RPi.GPIO as GPIO
+import config
+
+GPIO.setmode(GPIO.BOARD)
+
+# Read config
+conf = config.loadConfig()
+
+for pump in conf.pumpList:
+    GPIO.setup(pump.gpio, GPIO.OUT, initial=GPIO.HIGH)
+
 
 # Read json drinks file
 f = open("drinks.json")
@@ -16,11 +27,12 @@ glassVolumes = data["glassVolumes"]
 wn = Tk()
 wn.title("PiCocktailMaker")
 wn.geometry("480x800")
+wn.configure(background="#2b2b2b")
 
 pickedVolume = None
 
 def someFunc(drink):
-    print(f"drink: {drink["name"]}")
+    #print(f"drink: {drink["name"]}")
     
     def dismiss():
         global pickedVolume
@@ -63,11 +75,17 @@ def someFunc(drink):
     if pickedVolume is None: return # Check if a volume was picked
     
     for ingredient in drink["ingredients"]:
-        print(f"ingredient: {ingredient["ingredient"]}")
-        # Open the corresponding pump
+        #print(f"ingredient: {ingredient["ingredient"]}")
+
+        hose = next(hose[ingredient["ingredient"]] for hose in data["hoseConfig"] if ingredient["ingredient"] in hose)
+        pump = next(pump for pump in conf.pumpList if pump.hose == hose)
+
+        GPIO.output(pump.gpio, 0) # Open pump
+
         timeToSleep = (tt100 / 100) * pickedVolume * (ingredient["volumePercentage"] / 100)
         sleep(timeToSleep)
-        # Close the pump
+
+        GPIO.output(pump.gpio, 1) # Close Pump
 
 # Create the buttons
 drinkListLength = len(data["drinks"])
@@ -76,11 +94,13 @@ for i in range(0,drinkListLength):
     drink = data["drinks"][i]
 
     # Create the button for a drink
-    someButton = Button(wn, text=f"{drink["name"]}", command=partial(someFunc, drink), height = 4, width=100, bd=0, bg="black")
-    someButton.grid(column=0, row=i)
+    someButton = Button(wn, text=drink["name"], command=partial(someFunc, drink), height = 4, width=100, highlightthickness=0, border=0, bg="yellow", activebackground="red")
+    someButton.grid(column=0, row=i, padx=10, pady=10)
 
     # Make the button-grid span the entire width
     wn.columnconfigure(i, weight=1)
 
 # Loop to maintain the window
 mainloop()
+
+GPIO.cleanup()

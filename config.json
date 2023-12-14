@@ -1,0 +1,37 @@
+{
+    "pumps": [
+        {
+            "hose": 1,
+            "gpio": 29
+        },
+        {
+            "hose": 2,
+            "gpio": 31
+        },
+        {
+            "hose": 3,
+            "gpio": 33
+        },
+        {
+            "hose": 4,
+            "gpio": 36
+        },
+        {
+            "hose": 5,
+            "gpio": 35
+        },
+        {
+            "hose": 6,
+            "gpio": 38
+        },
+        {
+            "hose": 7,
+            "gpio": 40
+        },
+        {
+            "hose": 8,
+            "gpio": 37
+        }
+    ],
+    "ledGPIO": 14
+}
