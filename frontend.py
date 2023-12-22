@@ -2,7 +2,7 @@ from tkinter import *
 import json
 from functools import partial
 from time import sleep
-import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO # type: ignore
 import threading
 import config
 import ledring
