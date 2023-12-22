@@ -3,12 +3,17 @@ import json
 from functools import partial
 from time import sleep
 import RPi.GPIO as GPIO
+import threading
 import config
+import ledring
 
 GPIO.setmode(GPIO.BOARD)
 
 # Read config
 conf = config.loadConfig()
+
+# Start lightstrip
+lstrip = ledring.startStrip()
 
 for pump in conf.pumpList:
     GPIO.setup(pump.gpio, GPIO.OUT, initial=GPIO.HIGH)
@@ -30,6 +35,17 @@ wn.geometry("480x800")
 wn.configure(background="#2b2b2b")
 
 pickedVolume = None
+
+def openPump(ingredient):
+    hose = next(hose[ingredient["ingredient"]] for hose in data["hoseConfig"] if ingredient["ingredient"] in hose)
+    pump = next(pump for pump in conf.pumpList if pump.hose == hose)
+
+    GPIO.output(pump.gpio, 0) # Open pump
+
+    timeToSleep = (tt100 / 100) * pickedVolume * (ingredient["volumePercentage"] / 100)
+    sleep(timeToSleep)
+
+    GPIO.output(pump.gpio, 1) # Close Pump
 
 def someFunc(drink):
     #print(f"drink: {drink["name"]}")
@@ -73,19 +89,34 @@ def someFunc(drink):
     dialog.wait_window() # Wait until popover is closed
     print(pickedVolume)
     if pickedVolume is None: return # Check if a volume was picked
+
+    maxTime = 0
+
+    for ingredient in drink["ingredients"]:
+        timeToSleep =  (tt100 / 100) * pickedVolume * (ingredient["volumePercentage"] / 100)
+        if timeToSleep > maxTime:
+            maxTime = timeToSleep
+    
+    lightThread = threading.Thread(target=ledring.progressRing, args=(lstrip, maxTime))
+    lightThread.start()
+
+    pumpThreads = [] # Threading, so each pump works simoultaneously
     
     for ingredient in drink["ingredients"]:
         #print(f"ingredient: {ingredient["ingredient"]}")
 
-        hose = next(hose[ingredient["ingredient"]] for hose in data["hoseConfig"] if ingredient["ingredient"] in hose)
-        pump = next(pump for pump in conf.pumpList if pump.hose == hose)
+        pumpThread = threading.Thread(target=openPump, args=(ingredient,))
+        pumpThread.start()
+        pumpThreads.append(pumpThread)
 
-        GPIO.output(pump.gpio, 0) # Open pump
+    for pumpThread in pumpThreads:
+        pumpThread.join()
 
-        timeToSleep = (tt100 / 100) * pickedVolume * (ingredient["volumePercentage"] / 100)
-        sleep(timeToSleep)
+    lightThread.join()
 
-        GPIO.output(pump.gpio, 1) # Close Pump
+    ledring.blinkStrip(lstrip)
+
+    ledring.endStrip(lstrip)
 
 # Create the buttons
 drinkListLength = len(data["drinks"])
